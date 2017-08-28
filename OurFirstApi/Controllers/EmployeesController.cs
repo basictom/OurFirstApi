@@ -51,11 +51,11 @@ namespace OurFirstApi.Controllers
 
                     var result =
                         connection.Query<EmployeeListResult>("Select * From Employee where EmployeeId = @id",
-                            new {id = id}).FirstOrDefault();
+                            new { id = id }).FirstOrDefault();
 
                     if (result == null)
                     {
-                        return Request.CreateErrorResponse(HttpStatusCode.NotFound,$"Employee with the Id {id} was not found");
+                        return Request.CreateErrorResponse(HttpStatusCode.NotFound, $"Employee with the Id {id} was not found");
                     }
 
                     return Request.CreateResponse(HttpStatusCode.OK, result);

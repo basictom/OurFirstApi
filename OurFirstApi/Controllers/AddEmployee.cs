@@ -1,39 +1,83 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using Dapper;
+using OurFirstApi.Models;
 
 namespace OurFirstApi.Controllers
 {
+    //api/employees
     public class AddEmployee : ApiController
     {
-        // GET api/<controller>
-        public IEnumerable<string> Get()
+        //api/employees
+        public HttpResponseMessage Post()
         {
-            return new string[] { "value1", "value2" };
+            Console.WriteLine("Enter first name:");
+            var x = Console.ReadLine();
+            Console.WriteLine("Enter last name:");
+            var y = Console.ReadLine();
+
+            using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["Chinook"].ConnectionString))
+            {
+                try
+                {
+                    connection.Open();
+
+                    var rowsAffected = connection.Execute("Insert into Employee(FirstName, LastName) " +
+                                                          "Values(@FirstName, @LastName)",
+                        new { FirstName = x, LastName = y });
+
+                    Console.WriteLine(rowsAffected != 1 ? "Add Failed" : "Success!");
+                }
+                catch (SqlException ex)
+                {
+                    Console.WriteLine("You done messed up");
+                    Console.WriteLine(ex.Message);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
+                }
+
+                return 
+
+                Console.WriteLine("Press enter to return to the menu.");
+                Console.ReadLine();
+            }
         }
 
-        // GET api/<controller>/5
-        public string Get(int id)
+        //api/employees/3000
+        public HttpResponseMessage Get(int id)
         {
-            return "value";
-        }
+            using (var connection =
+                new SqlConnection(ConfigurationManager.ConnectionStrings["Chinook"].ConnectionString))
+            {
+                try
+                {
+                    connection.Open();
 
-        // POST api/<controller>
-        public void Post([FromBody]string value)
-        {
-        }
+                    var result =
+                        connection.Query<EmployeeListResult>("Select * From Employee where EmployeeId = @id",
+                            new { id = id }).FirstOrDefault();
 
-        // PUT api/<controller>/5
-        public void Put(int id, [FromBody]string value)
-        {
-        }
+                    if (result == null)
+                    {
+                        return Request.CreateErrorResponse(HttpStatusCode.NotFound, $"Employee with the Id {id} was not found");
+                    }
 
-        // DELETE api/<controller>/5
-        public void Delete(int id)
-        {
+                    return Request.CreateResponse(HttpStatusCode.OK, result);
+                }
+                catch (Exception ex)
+                {
+                    return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex);
+                }
+            }
         }
     }
 }
